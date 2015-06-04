@@ -25,7 +25,7 @@ TARGET=$(basename "${RELEASE_URL}")
 VOLUME_NAME=$(basename "${TARGET}" .dmg)
 VOLUME_MOUNT="/Volumes/${VOLUME_NAME}"
 
-curl -s -o "${TARGET}" "${RELEASE_URL}"
+curl -o "${TARGET}" "${RELEASE_URL}"
 
 hdiutil attach -quiet "${TARGET}"
 
