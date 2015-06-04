@@ -7,11 +7,9 @@ set -e
 
 ## The page containing a list of the RStudio daily OSX builds.
 DAILY_LIST_URL=http://www.rstudio.org/download/daily/desktop/mac/
-## How should we fetch a URL and have its result piped to STDOUT?
-# STDIN_FETCH="wget -q -O -"
-FETCH_STDIN="curl -s"
 
-RELEASE_URL=$(${FETCH_STDIN} ${DAILY_LIST_URL} | grep -m 1 -o "https[^\']*")
+## Extract the latest from the index page.
+RELEASE_URL=$(curl -s ${DAILY_LIST_URL} | grep -m 1 -o "https[^\']*")
 if [ "${RELEASE_URL}" ==  "" ]; then
     echo "Could not extract daily build URL from listing; maybe rstudio.org is having problems?"
     echo "Check: ${DAILY_LIST_URL}"
