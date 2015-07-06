@@ -5,7 +5,7 @@
 set -e
 
 # https://support.rstudio.com/hc/en-us/articles/203842428-Getting-the-newest-RStudio-builds
-REDIRECT_URL="http://www.rstudio.org/download/latest/daily/desktop/mac/RStudio-latest.dmg"
+REDIRECT_URL="https://www.rstudio.org/download/latest/daily/desktop/mac/RStudio-latest.dmg"
 echo "Discovering daily build from: ${REDIRECT_URL}"
 
 # Perform a HEAD request to find the redirect target. We use the name of the
