@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Installs the latest RStudio daily desktop build for OSX/macOS and Ubuntu(amd64)
 #
@@ -6,30 +6,72 @@
 
 set -e
 
+plusdecode() {
+    sed -e 's/%2B/+/gi'
+}
+
+plusencode() {
+    sed -e 's/\+/%2B/g'
+}
+
 install_macos_daily() {
+    FORCE="$1"
+    REQUESTED_VERSION="$2"
+
     REDIRECT_URL="https://www.rstudio.org/download/latest/daily/desktop/mac/RStudio-latest.dmg"
     echo "Discovering daily build from: ${REDIRECT_URL}"
 
     # Perform a HEAD request to find the redirect target. We use the name of the
     # file to derive the mounted volume name.
-    RELEASE_URL=$(curl -s -L -I -o /dev/null -w '%{url_effective}' "${REDIRECT_URL}")
-    if [ "${RELEASE_URL}" ==  "" ]; then
+    LATEST_URL=$(curl -s -L -I -o /dev/null -w '%{url_effective}' "${REDIRECT_URL}")
+    if [ "${LATEST_URL}" ==  "" ]; then
         echo "Could not extract daily build URL from listing; maybe rstudio.org is having problems?"
         echo "Check: ${DAILY_LIST_URL}"
         exit 1
     fi
 
-    echo "Downloading daily build from: ${RELEASE_URL}"
+    # Test to see if we already have this version installed.
+    LATEST_URL_VERSION=$(echo "${LATEST_URL}" | sed -e 's|^.*/RStudio-\(.*\)\.dmg|\1|')
+    LATEST_VERSION=$(echo "${LATEST_URL_VERSION}" | plusdecode)
+    echo "Latest version:    ${LATEST_VERSION}"
+
+    REQUESTED_URL="${LATEST_URL}"
+    if [ -z "${REQUESTED_VERSION}" ] ; then
+        REQUESTED_VERSION="${LATEST_VERSION}"
+    elif [ "${REQUESTED_VERSION}" != "${LATEST_VERSION}" ] ; then
+        echo "Requested version: ${REQUESTED_VERSION}"
+        REQUESTED_URL_VERSION=$(echo "${REQUESTED_VERSION}" | plusencode)
+        REQUESTED_URL=$(echo "${LATEST_URL}" | sed -e "s|${LATEST_URL_VERSION}|${REQUESTED_URL_VERSION}|")
+    fi
+
+    PLIST="/Applications/RStudio.app/Contents/Info.plist"
+    if [ -f "${PLIST}" ] ; then
+        # Maybe CFBundleShortVersionString or CFBundleVersion?
+        INSTALLED_VERSION=$(defaults read "${PLIST}" CFBundleLongVersionString)
+        echo "Installed version: ${INSTALLED_VERSION}"
+        if [ "${REQUESTED_VERSION}" == "${INSTALLED_VERSION}" ] ; then
+            if [ "${FORCE}" == "yes" ] ; then
+                echo "RStudio-${REQUESTED_VERSION} is already installed. Forcing re-installation."
+            else
+                echo "RStudio-${REQUESTED_VERSION} is already installed. Use '-f' to force re-installation."
+                exit 0
+            fi
+        fi
+    else
+        echo "Installed version: <none>"
+    fi
+
+    echo "Downloading daily build from: ${REQUESTED_URL}"
 
     cd /tmp
 
-    TARGET=$(basename "${RELEASE_URL}")
+    TARGET=$(basename "${REQUESTED_URL}")
     # Volume name mirrors the DMG filename without extension.
     # Simpler than parsing hdiutil output.
-    VOLUME_NAME=$(basename "${TARGET}" .dmg)
+    VOLUME_NAME=$(basename "${TARGET}" .dmg | plusdecode)
     VOLUME_MOUNT="/Volumes/${VOLUME_NAME}"
 
-    curl -L -o "${TARGET}" "${RELEASE_URL}"
+    curl -L -o "${TARGET}" "${REQUESTED_URL}"
 
     hdiutil attach -quiet "${TARGET}"
 
@@ -76,11 +118,28 @@ install_ubuntu_daily() {
     rm "${TARGET}"
 }
 
+FORCE=no
+for arg in "$@"; do
+    case $arg in
+        -f|--force)
+            FORCE=yes
+            shift
+        ;;
+    esac
+done
+
+VERSION=
+if [[ $# -eq 1 ]]; then
+    VERSION="$1"
+elif [[ $# -ne 0 ]]; then
+    echo "Only one (optional) version argument is supported."
+    exit 1
+fi
 
 if [[ `uname -s` = "Darwin" ]]; then
-    install_macos_daily
+    install_macos_daily $FORCE "${VERSION}"
 elif cat /etc/issue | grep -q Ubuntu ; then
-    install_ubuntu_daily
+    install_ubuntu_daily $FORCE "${VERSION}"
 else
     echo "This script only works on OSX/macOS and Ubuntu Linux."
     exit 1
