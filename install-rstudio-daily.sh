@@ -77,7 +77,7 @@ install_macos_daily() {
     VOLUME_NAME=$(basename "${TARGET}" .dmg)
     VOLUME_MOUNT="/Volumes/${VOLUME_NAME}"
 
-    curl -L -o "${TARGET}" "${REQUESTED_URL}"
+    curl -L --fail -o "${TARGET}" "${REQUESTED_URL}"
 
     hdiutil attach -quiet "${TARGET}"
 
@@ -106,7 +106,7 @@ install_ubuntu_daily() {
 
     echo "Downloading daily build from: ${URL}"
     if [ -x /usr/bin/curl ] ; then
-        curl -L -o "${TARGET}" "${URL}"
+        curl -L --fail -o "${TARGET}" "${URL}"
     elif [ -x /usr/bin/wget ] ; then
         wget -O "${TARGET}" "${URL}"
     else
