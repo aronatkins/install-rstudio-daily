@@ -6,12 +6,18 @@
 
 set -e
 
-plusdecode() {
-    sed -e 's/%2B/+/gi'
+# A version like 2022.01.0-daily+294 will have a filename/URL like
+# RStudio-2022.01.0-daily-294.dmg. There was a brief period of time when the
+# URL contained the plus (which required escaping).
+
+# From URL-form to version-form.
+dailyplus() {
+    sed -e 's/daily-/daily+/'
 }
 
-plusencode() {
-    sed -e 's/\+/%2B/g'
+# From version-form to URL-form.
+dailyunplus() {
+    sed -e 's/daily\+/daily-/'
 }
 
 install_macos_daily() {
@@ -32,7 +38,7 @@ install_macos_daily() {
 
     # Test to see if we already have this version installed.
     LATEST_URL_VERSION=$(echo "${LATEST_URL}" | sed -e 's|^.*/RStudio-\(.*\)\.dmg|\1|')
-    LATEST_VERSION=$(echo "${LATEST_URL_VERSION}" | plusdecode)
+    LATEST_VERSION=$(echo "${LATEST_URL_VERSION}" | dailyplus)
     echo "Latest version:    ${LATEST_VERSION}"
 
     REQUESTED_URL="${LATEST_URL}"
@@ -40,7 +46,7 @@ install_macos_daily() {
         REQUESTED_VERSION="${LATEST_VERSION}"
     elif [ "${REQUESTED_VERSION}" != "${LATEST_VERSION}" ] ; then
         echo "Requested version: ${REQUESTED_VERSION}"
-        REQUESTED_URL_VERSION=$(echo "${REQUESTED_VERSION}" | plusencode)
+        REQUESTED_URL_VERSION=$(echo "${REQUESTED_VERSION}" | dailyunplus)
         REQUESTED_URL=$(echo "${LATEST_URL}" | sed -e "s|${LATEST_URL_VERSION}|${REQUESTED_URL_VERSION}|")
     fi
 
@@ -68,7 +74,7 @@ install_macos_daily() {
     TARGET=$(basename "${REQUESTED_URL}")
     # Volume name mirrors the DMG filename without extension.
     # Simpler than parsing hdiutil output.
-    VOLUME_NAME=$(basename "${TARGET}" .dmg | plusdecode)
+    VOLUME_NAME=$(basename "${TARGET}" .dmg)
     VOLUME_MOUNT="/Volumes/${VOLUME_NAME}"
 
     curl -L -o "${TARGET}" "${REQUESTED_URL}"
