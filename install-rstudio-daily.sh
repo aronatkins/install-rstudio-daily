@@ -89,7 +89,7 @@ install_macos_daily() {
 
     rm "${TARGET}"
 
-    echo "Installed ${VOLUME_NAME} to /Applications"
+    echo "Installed ${REQUESTED_VERSION} from volume ${VOLUME_NAME} into /Applications"
 }
 
 install_ubuntu_daily() {
