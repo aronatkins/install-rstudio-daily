@@ -20,19 +20,20 @@ dailyunplus() {
     sed -e 's/daily\+/daily-/'
 }
 
-install_macos_daily() {
-    FORCE="$1"
-    REQUESTED_VERSION="$2"
+install_macos() {
+    KIND="$1"
+    FORCE="$2"
+    REQUESTED_VERSION="$3"
 
-    REDIRECT_URL="https://www.rstudio.org/download/latest/daily/desktop/mac/RStudio-latest.dmg"
-    echo "Discovering daily build from: ${REDIRECT_URL}"
+    REDIRECT_URL="https://www.rstudio.org/download/latest/${KIND}/desktop/mac/RStudio-latest.dmg"
+    echo "Discovering build from: ${REDIRECT_URL}"
 
     # Perform a HEAD request to find the redirect target. We use the name of the
     # file to derive the mounted volume name.
     LATEST_URL=$(curl -s -L -I -o /dev/null -w '%{url_effective}' "${REDIRECT_URL}")
     if [ "${LATEST_URL}" ==  "" ]; then
-        echo "Could not extract daily build URL from listing; maybe rstudio.org is having problems?"
-        echo "Check: ${DAILY_LIST_URL}"
+        echo "Could not extract build URL from listing; maybe rstudio.org is having problems?"
+        echo "Check: https://dailies.rstudio.com"
         exit 1
     fi
 
@@ -67,7 +68,7 @@ install_macos_daily() {
         echo "Installed version: <none>"
     fi
 
-    echo "Downloading daily build from: ${REQUESTED_URL}"
+    echo "Downloading build from: ${REQUESTED_URL}"
 
     cd /tmp
 
@@ -92,8 +93,10 @@ install_macos_daily() {
     echo "Installed ${REQUESTED_VERSION} from volume ${VOLUME_NAME} into /Applications"
 }
 
-install_ubuntu_daily() {
-    URL="https://www.rstudio.org/download/latest/daily/desktop/ubuntu64/rstudio-latest-amd64.deb"
+install_ubuntu() {
+    DIST="$1"
+    KIND="$2"
+    URL="https://rstudio.org/download/latest/${KIND}/desktop/${DIST}/rstudio-latest-amd64.deb"
     PACKAGE=$(basename "${URL}")
     TARGET="/tmp/${PACKAGE}"
 
@@ -116,7 +119,7 @@ install_ubuntu_daily() {
 
     echo "Installing ${TARGET}"
     LAUNCH=""
-    if [[ `whoami` != "root" ]]; then
+    if [[ $(whoami) != "root" ]]; then
         LAUNCH="sudo"
     fi
     ${LAUNCH} dpkg -i "${TARGET}"
@@ -124,13 +127,35 @@ install_ubuntu_daily() {
     rm "${TARGET}"
 }
 
-FORCE=no
+help() {
+    echo "$0 [-h] [-s] [-f]"
+    echo ""
+    echo "Install the most recent RStudio build. Supports macOS and Ubuntu 18.04."
+    echo ""
+    echo "Arguments:"
+    echo "  -f, --force   Force installation when the same version is already"
+    echo "                installed (macOS only)."
+    echo "  -s, --stable  Use stable, rather than daily builds."
+    echo "  -h, --help    Display this help text and exit."
+}
+
+DIST="bionic"
+KIND="daily"
+FORCE="no"
 for arg in "$@"; do
     case $arg in
-        -f|--force)
-            FORCE=yes
+        -s|--stable)
+            KIND="stable"
             shift
-        ;;
+            ;;
+        -f|--force)
+            FORCE="yes"
+            shift
+            ;;
+        -h|--help)
+            help
+            exit
+            ;;
     esac
 done
 
@@ -142,10 +167,10 @@ elif [[ $# -ne 0 ]]; then
     exit 1
 fi
 
-if [[ `uname -s` = "Darwin" ]]; then
-    install_macos_daily $FORCE "${VERSION}"
-elif cat /etc/issue | grep -q Ubuntu ; then
-    install_ubuntu_daily $FORCE "${VERSION}"
+if [[ $(uname -s) = "Darwin" ]]; then
+    install_macos "${KIND}" "${FORCE}" "${VERSION}"
+elif grep -q Ubuntu /etc/issue ; then
+    install_ubuntu "${DIST}" "${KIND}"
 else
     echo "This script only works on OSX/macOS and Ubuntu Linux."
     exit 1
