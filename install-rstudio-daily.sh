@@ -11,13 +11,17 @@ set -e
 # URL contained the plus (which required escaping).
 
 # From URL-form to version-form.
+# 2022.07.0-548 => 2022.07.0+548
+# 2022.10.0-daily-9 => 2022.10.0-daily+9
 dailyplus() {
-    sed -e 's/daily-/daily+/'
+    sed -e 's/-\([0-9]*\)$/+\1/'
 }
 
 # From version-form to URL-form.
+# 2022.07.0+548 => 2022.07.0-548
+# 2022.10.0-daily+9 => 2022.10.0-daily-9
 dailyunplus() {
-    sed -e 's/daily\+/daily-/'
+    sed -e 's/+\([0-9]*\)$/-\1/'
 }
 
 install_macos() {
