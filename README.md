@@ -12,3 +12,14 @@ curl -O https://raw.githubusercontent.com/aronatkins/install-rstudio-daily/main/
 chmod +x ./install-rstudio-daily.sh
 ./install-rstudio-daily.sh
 ```
+
+## Prerequisite
+
+Requires [`jq`](https://stedolan.github.io/jq/).
+
+## RStudio Dailies
+
+The RStudio daily builds are available at <https://dailies.rstudio.com>.
+
+* JSON file enumerating the dailies for all platforms: <https://dailies.rstudio.com/rstudio/latest/index.json>
+* JSON file enumerating the stable releases: <https://www.rstudio.com/wp-content/downloads.json>
