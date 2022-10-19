@@ -32,7 +32,7 @@ installed_macos_version() {
         echo "${INSTALLED_VERSION}"
         return
     fi
-    echo "<none>"
+    echo "none"
 }
 
 install_macos_daily() {
@@ -154,7 +154,6 @@ help() {
     echo "  -h, --help    Display this help text and exit."
 }
 
-KIND="daily"
 FORCE="no"
 for arg in "$@"; do
     case $arg in
@@ -178,7 +177,7 @@ elif [[ $# -ne 0 ]]; then
 fi
 
 if [[ $(uname -s) = "Darwin" ]]; then
-    install_macos_daily "${KIND}" "${FORCE}" "${VERSION}"
+    install_macos_daily "${FORCE}" "${VERSION}"
 elif grep -q "Ubuntu 18" /etc/issue ; then
     install_ubuntu "bionic-amd64" "${VERSION}"
 elif grep -q "Ubuntu 20" /etc/issue ; then
