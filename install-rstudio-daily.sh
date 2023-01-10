@@ -73,7 +73,7 @@ install_macos_daily() {
 install_macos_url() {
     REQUESTED_URL="$1"
 
-    echo "Downloading build from: ${REQUESTED_URL}"
+    echo "Downloading: ${REQUESTED_URL}"
 
     cd /tmp
 
@@ -85,17 +85,23 @@ install_macos_url() {
 
     curl -L --fail -o "${TARGET}" "${REQUESTED_URL}"
 
-    hdiutil attach -quiet "${TARGET}"
+    echo "Attaching to image: ${TARGET}"
+    hdiutil attach -readonly -quiet "${TARGET}"
 
-    # Remove any prior installation.
+    echo "Removing existing installation (if any)."
     rm -rf /Applications/RStudio.app
+
+    echo "Installing into: /Applications/RStudio.app"
     cp -R "${VOLUME_MOUNT}/RStudio.app" /Applications
 
+    echo "Detaching from image: ${VOLUME_MOUNT}"
     hdiutil detach -quiet "${VOLUME_MOUNT}"
 
+    echo "Removing download: ${TARGET}"
     rm "${TARGET}"
 
-    echo "Installed RStudio from volume ${VOLUME_NAME} into /Applications"
+    echo
+    echo "Installed RStudio from volume ${VOLUME_NAME} as /Applications/RStudio.app"
 }
 
 install_ubuntu() {
